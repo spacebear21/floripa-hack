@@ -6,6 +6,9 @@ use std::error::Error;
 use std::str::FromStr;
 use std::time::Duration;
 use tokio::time;
+use unleashed::{get_unleashed_balance, init_unleashed_client};
+
+mod unleashed;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct WalletState {
@@ -120,36 +123,6 @@ impl Sloppy {
             time::sleep(Duration::from_secs(86400)).await; // 24 hours
         }
     }
-}
-
-fn init_unleashed_client(unleashed_api_key: &str) -> Result<reqwest::Client, Box<dyn Error>> {
-    let mut headers = header::HeaderMap::new();
-    headers.insert(
-        header::ACCEPT,
-        header::HeaderValue::from_str("application/json")?,
-    );
-    let mut auth_value = header::HeaderValue::from_str(&format!("Bearer {}", unleashed_api_key))?;
-    auth_value.set_sensitive(true);
-    headers.insert(header::AUTHORIZATION, auth_value);
-    Ok(reqwest::ClientBuilder::new()
-        .default_headers(headers)
-        .build()?)
-}
-
-async fn get_unleashed_balance(
-    client: &reqwest::Client,
-) -> Result<UnleashedBalance, reqwest::Error> {
-    let res = client
-        .get("https://unleashed.chat/api/v1/account/balance")
-        .send()
-        .await?;
-    res.json().await
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct UnleashedBalance {
-    balance: f64,
-    balance_currency: String,
 }
 
 #[tokio::main]
