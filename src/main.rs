@@ -6,7 +6,7 @@ use std::error::Error;
 use std::str::FromStr;
 use std::time::Duration;
 use tokio::time;
-use unleashed::{get_unleashed_balance, init_unleashed_client};
+use unleashed::UnleashedClient;
 
 mod unleashed;
 
@@ -91,7 +91,7 @@ impl Sloppy {
         let nwc_uri = std::env::var("NWC_URI")?;
         let unleashed_api_key = std::env::var("UNLEASHED_API")?;
 
-        let ai_client = init_unleashed_client(&unleashed_api_key)?;
+        let ai_client = UnleashedClient::new(&unleashed_api_key)?;
 
         // Parse NWC uri
         let uri = NostrWalletConnectURI::parse(nwc_uri)?;
@@ -105,7 +105,7 @@ impl Sloppy {
             // Check current funds
             self.refresh_wallet(&nwc).await?;
             println!("Wallet balance: {:?}", self.wallet);
-            println!("{:?}", get_unleashed_balance(&ai_client).await);
+            println!("{:?}", ai_client.get_balance().await);
 
             // Generate fundraising post
             let post_content = self.generate_fundraising_post().await?;
