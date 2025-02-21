@@ -1,3 +1,4 @@
+use bitcoin::Amount;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::time::Duration;
@@ -5,23 +6,15 @@ use tokio::time;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct WalletState {
-    btc_balance: f64,
-    lightning_balance: f64,
-    last_updated: chrono::DateTime<chrono::Utc>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct ExpenseReport {
-    server_costs: f64,
-    llm_costs: f64,
-    transaction_fees: f64,
+    onchain_balance: Amount,
+    lightning_balance: Amount,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 struct FundraisingAttempt {
     timestamp: chrono::DateTime<chrono::Utc>,
-    post_content: String,
-    donations_received: f64,
+    post_content: SocialMediaPost,
+    donations_received: Amount,
     donor_count: u32,
 }
 
@@ -34,7 +27,6 @@ struct SocialMediaPost {
 
 struct Sloppy {
     wallet: WalletState,
-    expenses: ExpenseReport,
     fundraising_history: Vec<FundraisingAttempt>,
 }
 
@@ -43,14 +35,8 @@ impl Sloppy {
         // Initialize the AI agent
         Ok(Self {
             wallet: WalletState {
-                btc_balance: 0.0,
-                lightning_balance: 0.0,
-                last_updated: chrono::offset::Utc::now(),
-            },
-            expenses: ExpenseReport {
-                server_costs: 0.0,
-                llm_costs: 0.0,
-                transaction_fees: 0.0,
+                onchain_balance: Amount::from_sat(0),
+                lightning_balance: Amount::from_sat(0),
             },
             fundraising_history: Vec::new(),
         })
@@ -59,10 +45,6 @@ impl Sloppy {
     async fn check_wallet_balance(&mut self) -> Result<(), Box<dyn Error>> {
         // Implement Bitcoin/Lightning wallet API integration
         todo!()
-    }
-
-    async fn calculate_expenses(&mut self) -> Result<f64, Box<dyn Error>> {
-        Ok(self.expenses.server_costs + self.expenses.llm_costs + self.expenses.transaction_fees)
     }
 
     async fn generate_fundraising_post(&self) -> Result<String, Box<dyn Error>> {
@@ -94,22 +76,19 @@ impl Sloppy {
 
     async fn run_survival_loop(&mut self) -> Result<(), Box<dyn Error>> {
         loop {
-            // 1. Check current funds
+            // Check current funds
             self.check_wallet_balance().await?;
 
-            // 2. Calculate needed funds
-            let required_funds = self.calculate_expenses().await?;
-
-            // 3. Generate fundraising post
+            // Generate fundraising post
             let post_content = self.generate_fundraising_post().await?;
 
-            // 4. Publish post
+            // Publish post
             self.publish_post(post_content).await?;
 
-            // 5. Monitor results
+            // Monitor results
             let metrics = self.monitor_donations(Duration::from_secs(3600)).await?;
 
-            // 6. Update history
+            // Update history
             self.update_fundraising_history(metrics).await?;
 
             // Wait before next iteration
