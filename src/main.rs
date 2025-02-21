@@ -1,7 +1,9 @@
 use bitcoin::Amount;
 use nwc::prelude::*;
+use reqwest::header;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
+use std::str::FromStr;
 use std::time::Duration;
 use tokio::time;
 
@@ -84,16 +86,23 @@ impl Sloppy {
 
     async fn run_survival_loop(&mut self) -> Result<(), Box<dyn Error>> {
         let nwc_uri = std::env::var("NWC_URI")?;
+        let unleashed_api_key = std::env::var("UNLEASHED_API")?;
+
+        let ai_client = init_unleashed_client(&unleashed_api_key)?;
+
         // Parse NWC uri
         let uri = NostrWalletConnectURI::parse(nwc_uri)?;
 
         // Initialize NWC client
         let nwc = NWC::new(uri);
 
+        println!("{:?}", nwc.get_info().await?);
+
         loop {
             // Check current funds
             self.refresh_wallet(&nwc).await?;
             println!("Wallet balance: {:?}", self.wallet);
+            println!("{:?}", get_unleashed_balance(&ai_client).await);
 
             // Generate fundraising post
             let post_content = self.generate_fundraising_post().await?;
@@ -111,6 +120,36 @@ impl Sloppy {
             time::sleep(Duration::from_secs(86400)).await; // 24 hours
         }
     }
+}
+
+fn init_unleashed_client(unleashed_api_key: &str) -> Result<reqwest::Client, Box<dyn Error>> {
+    let mut headers = header::HeaderMap::new();
+    headers.insert(
+        header::ACCEPT,
+        header::HeaderValue::from_str("application/json")?,
+    );
+    let mut auth_value = header::HeaderValue::from_str(&format!("Bearer {}", unleashed_api_key))?;
+    auth_value.set_sensitive(true);
+    headers.insert(header::AUTHORIZATION, auth_value);
+    Ok(reqwest::ClientBuilder::new()
+        .default_headers(headers)
+        .build()?)
+}
+
+async fn get_unleashed_balance(
+    client: &reqwest::Client,
+) -> Result<UnleashedBalance, reqwest::Error> {
+    let res = client
+        .get("https://unleashed.chat/api/v1/account/balance")
+        .send()
+        .await?;
+    res.json().await
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct UnleashedBalance {
+    balance: f64,
+    balance_currency: String,
 }
 
 #[tokio::main]
