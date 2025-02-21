@@ -43,9 +43,16 @@ impl Sloppy {
         })
     }
 
-    async fn check_wallet_balance(&mut self) -> Result<(), Box<dyn Error>> {
-        // Implement Bitcoin/Lightning wallet API integration
-        todo!()
+    // Fetch latest balances and update the wallet state
+    async fn refresh_wallet(&mut self, nwc: &NWC) -> Result<(), Box<dyn Error>> {
+        self.wallet.lightning_balance = self.get_lightning_balance(nwc).await?;
+        Ok(())
+    }
+
+    // Get lightning balance using Nostr Wallet Connect
+    async fn get_lightning_balance(&mut self, nwc: &NWC) -> Result<Amount, Box<dyn Error>> {
+        let balance_msats = nwc.get_balance().await?;
+        Ok(Amount::from_sat(balance_msats / 1000))
     }
 
     async fn generate_fundraising_post(&self) -> Result<String, Box<dyn Error>> {
@@ -83,17 +90,10 @@ impl Sloppy {
         // Initialize NWC client
         let nwc = NWC::new(uri);
 
-        // Get info
-        let info = nwc.get_info().await?;
-        println!("Supported methods: {:?}", info.methods);
-
-        // Get balance
-        let balance = nwc.get_balance().await?;
-        println!("Balance: {balance} SAT");
-
         loop {
             // Check current funds
-            self.check_wallet_balance().await?;
+            self.refresh_wallet(&nwc).await?;
+            println!("Wallet balance: {:?}", self.wallet);
 
             // Generate fundraising post
             let post_content = self.generate_fundraising_post().await?;
