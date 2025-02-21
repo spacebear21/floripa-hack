@@ -1,3 +1,4 @@
+use nwc::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::time::Duration;
@@ -93,6 +94,21 @@ impl Sloppy {
     }
 
     async fn run_survival_loop(&mut self) -> Result<(), Box<dyn Error>> {
+        let nwc_uri = std::env::var("NWC_URI")?;
+        // Parse NWC uri
+        let uri = NostrWalletConnectURI::parse(nwc_uri)?;
+
+        // Initialize NWC client
+        let nwc = NWC::new(uri);
+
+        // Get info
+        let info = nwc.get_info().await?;
+        println!("Supported methods: {:?}", info.methods);
+
+        // Get balance
+        let balance = nwc.get_balance().await?;
+        println!("Balance: {balance} SAT");
+
         loop {
             // 1. Check current funds
             self.check_wallet_balance().await?;
