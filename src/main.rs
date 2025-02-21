@@ -62,7 +62,8 @@ impl Sloppy {
 
     async fn generate_fundraising_post(&self) -> Result<String, Box<dyn Error>> {
         // Implement LLM API call with context
-        todo!()
+        //todo!()
+        Ok("Implement me".into())
     }
 
     async fn publish_post(&self, content: String) -> Result<(), Box<dyn Error>> {
