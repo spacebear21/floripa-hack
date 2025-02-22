@@ -9,7 +9,7 @@ pub struct UnleashedClient {
 }
 
 impl UnleashedClient {
-    pub fn new(unleashed_api_key: &str) -> Result<UnleashedClient, Box<dyn Error>> {
+    pub fn new(unleashed_api_key: &str) -> Result<UnleashedClient, Box<dyn Error + Send + Sync>> {
         let mut headers = HeaderMap::new();
         headers.insert(ACCEPT, HeaderValue::from_str("application/json")?);
         let mut auth_value = HeaderValue::from_str(&format!("Bearer {}", unleashed_api_key))?;
@@ -30,7 +30,7 @@ impl UnleashedClient {
         res.json().await
     }
 
-    pub async fn ask_llm(&self, prompt: &str) -> Result<String, Box<dyn Error>> {
+    pub async fn ask_llm(&self, prompt: &str) -> Result<String, Box<dyn Error + Send + Sync>> {
         let res = self
             .client
             .post("https://unleashed.chat/api/v1/chat/completions")
