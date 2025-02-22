@@ -66,7 +66,9 @@ impl Sloppy {
     ) -> Result<String, Box<dyn Error>> {
         // Implement LLM API call with context
 
-        let completion = ai_client.ask_llm("This is your first campaign!").await?;
+        let completion = ai_client
+            .ask_llm("[There are no previous campaings | nostr]")
+            .await?;
         Ok(completion)
     }
 

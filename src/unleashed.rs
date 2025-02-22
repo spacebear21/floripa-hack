@@ -43,7 +43,7 @@ impl UnleashedClient {
                     },
                     {
                       "role": "assistant",
-                      "content": "There is a server that runs The LLM and also a server that runs The Program which queries the LLM and can also post advertising campaings to the internet. The advertising campaings help fund The LLM server and The Program server. We need to ask humans on the internet for Bitcoin and Lightning payments in order to keep the servers running. You will receive a consolidated list of previous campaigns, a list of current platforms to post advertisements, and you are to generate the text for a next campaign which is intended to bring in money to keep your servers running."
+                      "content": "There is a server that runs The LLM and also a server that runs The Program which queries the LLM and can also post advertising campaings to the internet. The advertising campaings help fund The LLM server and The Program server. We need to ask humans on the internet for Bitcoin and Lightning payments in order to keep the servers running. You will receive a consolidated list of previous campaigns, a list of currently available platforms to post advertisements, and you are to generate the text for a next campaign which is intended to bring in money to keep your servers running. The format you will receive is: [previous campaings | available platforms]. Keep the advertisement very short because it needs to fit into a twitter post or nostr post."
                     }
                   ],
                   "stream": true,
@@ -84,33 +84,33 @@ impl UnleashedClient {
         }
 
         let mut stream = res.bytes_stream();
-        let mut buffer = Vec::new();
-        let mut answer = String::new();
+        let mut answers = Vec::<ChatCompletion>::new();
 
         while let Some(chunk) = stream.next().await {
             match chunk {
                 Ok(bytes) => {
-                    let chunk_str = String::from_utf8_lossy(&bytes);
-                    println!("Received chunk: {}", chunk_str);
-                    buffer.extend_from_slice(&bytes);
+                    let partial_completion = String::from_utf8_lossy(&bytes);
+                    for line in partial_completion.lines() {
+                        if line.starts_with("data:") {
+                            let json_part = &line[5..]; // Remove 'data:' prefix
+                            if let Ok(parsed) = serde_json::from_str::<ChatCompletion>(json_part) {
+                                answers.push(parsed);
+                            }
+                        }
+                    }
                 }
                 Err(e) => return Err(format!("Streaming error: {:?}", e).into()),
             }
         }
 
-        let streamed_data = String::from_utf8(buffer)?;
-
-        if let Ok(parsed) = serde_json::from_str::<ChatCompletion>(&streamed_data) {
-            println!("parsed: {:?}", &parsed);
-            let partial_answer = parsed
-                .choices
-                .iter()
-                .fold(String::new(), |mut acc, choice| {
-                    acc.push_str(&choice.delta.content);
-                    acc
-                });
-            answer.push_str(&partial_answer);
-        }
+        let answer = answers
+            .iter()
+            .flat_map(|completion| &completion.choices)
+            .map(|choice| &choice.delta.content)
+            .fold(String::new(), |mut acc, content| {
+                acc.push_str(content);
+                acc
+            });
 
         Ok(answer)
     }
