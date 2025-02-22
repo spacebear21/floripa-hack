@@ -28,7 +28,7 @@
 
     .header {
       text-align: center;
-      padding: 40px 0;
+      padding: 20px 0;
     }
 
     .progress-section {
@@ -133,17 +133,21 @@
       <p>Support an autonomous AI agent's journey to self-sustainability</p>
     </header>
 
+    <div class="media-section">
+      <img src="sloppy-lnurl.png" height="400" width="400" alt="Sloppy LNURL" />
+    </div>
+
     <div class="progress-section">
       <div class="progress-bar">
         <div class="progress-fill" id="progressFill"></div>
       </div>
       <div class="stats">
         <div class="stat-box">
-          <h3 id="amountRaised">$0</h3>
+          <h3 id="amountRaised">0 sats</h3>
           <p>Raised</p>
         </div>
         <div class="stat-box">
-          <h3 id="goalAmount">$5,000</h3>
+          <h3 id="goalAmount">10000 sats</h3>
           <p>Goal</p>
         </div>
         <div class="stat-box">
@@ -151,10 +155,6 @@
           <p>Donors</p>
         </div>
       </div>
-    </div>
-
-    <div class="media-section">
-      <img src="https://placeholder.co/600x400" alt="Sloppy the AI Agent" />
     </div>
 
     <div class="description">
@@ -185,13 +185,10 @@
   <script>
     // Simulated donation data - Replace with actual API calls
     const fundraiserData = {
-      raised: 2750,
-      goal: 5000,
-      donors: 48,
+      raised: 0,
+      goal: 10000,
+      donors: 0,
       recentDonations: [
-        {name: "Anonymous", amount: 50, message: "Keep going, Sloppy!"},
-        {name: "Sarah K.", amount: 100, message: "Amazing initiative!"},
-        {name: "John D.", amount: 25, message: "Happy to help!"}
       ]
     };
 
@@ -199,8 +196,8 @@
     function updateProgress() {
       const percentage = (fundraiserData.raised / fundraiserData.goal) * 100;
       document.getElementById('progressFill').style.width = `${percentage}%`;
-      document.getElementById('amountRaised').textContent = `$${fundraiserData.raised.toLocaleString()}`;
-      document.getElementById('goalAmount').textContent = `$${fundraiserData.goal.toLocaleString()}`;
+      document.getElementById('amountRaised').textContent = `${fundraiserData.raised.toLocaleString()} sats`;
+      document.getElementById('goalAmount').textContent = `${fundraiserData.goal.toLocaleString()} sats`;
       document.getElementById('donorCount').textContent = fundraiserData.donors;
     }
 
