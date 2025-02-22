@@ -3,7 +3,7 @@ use axum::Router;
 use clap::{Arg, Command};
 use sloppy::Sloppy;
 use std::fs::{File, OpenOptions};
-use std::io::{self, Write};
+use std::io::{self, BufRead, BufReader, Write};
 pub mod nostr;
 pub mod sloppy;
 pub mod unleashed;
@@ -76,14 +76,23 @@ fn make_sloppy() -> io::Result<()> {
     Ok(())
 }
 
-fn post_to_nostr() -> io::Result<()> {
+fn save_to_log(item: &str) -> io::Result<()> {
     let log_file_path = "agent.log";
     let mut file = OpenOptions::new()
         .create(true) // Create the file if it does not exist
         .append(true) // Append to the file
         .open(log_file_path)?;
 
-    writeln!(file, "Post created at {}", chrono::Local::now())?;
-    println!("Post created and logged successfully.");
+    writeln!(file, "{}", item)?;
+    println!("item logged: {}", item);
     Ok(())
+}
+
+fn get_last_log_entry() -> io::Result<Option<String>> {
+    let log_file_path = "agent.log";
+    let file = File::open(log_file_path)?;
+    let reader = BufReader::new(file);
+
+    let last_line = reader.lines().filter_map(Result::ok).last();
+    Ok(last_line)
 }

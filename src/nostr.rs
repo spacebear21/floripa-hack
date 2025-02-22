@@ -28,16 +28,22 @@ pub async fn publish_on_nostr(note: &str) -> Result<(), Box<dyn Error + Send + S
     // Connect to relays
     client.connect().await;
 
+    let nostr_name = std::env::var("NOSTR_NAME")?;
+    let nostr_display_name = std::env::var("NOSTR_DISPLAY_NAME")?;
+    let nostr_about = std::env::var("NOSTR_ABOUT")?;
+    let nostr_picture = std::env::var("NOSTR_PICTURE")?;
+    let nostr_banner = std::env::var("NOSTR_BANNER")?;
+    let nostr_nip_05 = std::env::var("NOSTR_NIP_05")?;
+    let nostr_lud_16 = std::env::var("NOSTR_LUD_16")?;
+
     let metadata = Metadata::new()
-        .name("Sloppy")
-        .display_name("Sloppy")
-        .about("Please help save sloppy.\nsavesloppy.org")
-        .picture(Url::parse(
-            "http://www.savesloppy.org/folded-hands_1f64f.png",
-        )?)
-        .banner(Url::parse("http://www.savesloppy.org/pray-bg.png")?)
-        .nip05("Sloppy@savesloppy.org")
-        .lud16("sloppy@getalby.com");
+        .name(nostr_name)
+        .display_name(nostr_display_name)
+        .about(nostr_about)
+        .picture(Url::parse(&nostr_picture)?)
+        .banner(Url::parse(&nostr_banner)?)
+        .nip05(nostr_nip_05)
+        .lud16(nostr_lud_16);
 
     // Update metadata
     client.set_metadata(&metadata).await?;

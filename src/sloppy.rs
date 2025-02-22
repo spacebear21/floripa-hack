@@ -8,6 +8,7 @@ use tokio::time;
 
 use crate::nostr::publish_on_nostr;
 use crate::unleashed::{CampaignResponse, UnleashedClient};
+use crate::{get_last_log_entry, save_to_log};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct WalletState {
@@ -64,6 +65,7 @@ impl Sloppy {
         ai_client: &UnleashedClient,
     ) -> Result<String, Box<dyn Error + Send + Sync>> {
         // Implement LLM API call with context
+        println!("Generating fundraising post");
         let completion = ai_client
             .ask_llm("{\"past_campaigns\": [\"\"], \"developer_responses\": \"You asked what we can do to improve responses. Maybe consider what you want out of this situation. Also, there are limited funds right now.\"}")
             .await?;
@@ -77,12 +79,28 @@ impl Sloppy {
         Ok(())
     }
 
-    async fn monitor_donations(
-        &mut self,
-        window: Duration,
-    ) -> Result<FundraisingAttempt, Box<dyn Error>> {
-        // Implement donation tracking
-        todo!()
+    async fn monitor_donations(&mut self) -> Result<bool, Box<dyn Error + Send + Sync>> {
+        let nwc_uri = std::env::var("NWC_URI")?;
+        let uri = NostrWalletConnectURI::parse(nwc_uri)?;
+        let nwc = NWC::new(uri);
+        let balance = nwc.get_balance().await?;
+
+        let prev_balance = match get_last_log_entry() {
+            Ok(Some(last_balance)) => last_balance.parse::<u64>().ok(),
+            _ => None,
+        };
+
+        save_to_log(&format!("{}", balance))?;
+
+        let should_post = match prev_balance {
+            Some(prev) => prev < balance.saturating_sub(100),
+            None => false,
+        };
+        println!(
+            "Should post: {} prev: {:?} curr: {}",
+            should_post, prev_balance, balance
+        );
+        Ok(should_post)
     }
 
     async fn update_fundraising_history(
@@ -108,26 +126,33 @@ impl Sloppy {
 
         println!("{:?}", nwc.get_info().await?);
 
+        // Generate initial fundraising post
+        let post_content = self.generate_fundraising_post(&ai_client).await?;
+        let post_content = remove_quotes(post_content.trim());
+        // Publish post
+        self.publish_post(post_content).await?;
+
         loop {
             // Check current funds
             self.refresh_wallet(&nwc).await?;
             println!("Wallet balance: {:?}", self.wallet);
             println!("{:?}", &ai_client.get_balance().await);
 
-            // Generate fundraising post
-            let post_content = self.generate_fundraising_post(&ai_client).await?;
-            let post_content = remove_quotes(post_content.trim());
-            // Publish post
-            self.publish_post(post_content).await?;
-
             // Monitor results
-            // let metrics = self.monitor_donations(Duration::from_secs(3600)).await?;
+            let metrics = self.monitor_donations().await?;
+            if metrics {
+                // Generate fundraising post
+                let post_content = self.generate_fundraising_post(&ai_client).await?;
+                let post_content = remove_quotes(post_content.trim());
+                // Publish post
+                self.publish_post(post_content).await?;
+            }
 
             // Update history
             //self.update_fundraising_history(metrics).await?;
 
             // Wait before next iteration
-            time::sleep(Duration::from_secs(86400)).await; // 24 hours
+            time::sleep(Duration::from_secs(15)).await; // 24 hours
         }
     }
 }
