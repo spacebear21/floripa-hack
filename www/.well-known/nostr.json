@@ -1,0 +1,11 @@
+{
+  "names": {
+    "Sloppy": "npub15spksrm37retpjf8axp0gev0d8gdan0qrdxae60nqraq67j4hj7q65qzzu"
+  },
+  "relays": {
+    "YOUR_NOSTR_PUBLIC_KEY_IN_HEX_FORMAT": [
+      "wss://relay.damus.io",
+      "wss://nos.lol",
+    ]
+  }
+}
