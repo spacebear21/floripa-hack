@@ -1,7 +1,7 @@
 use nostr_sdk::prelude::*;
 use std::error::Error;
 
-pub async fn publish_on_nostr() -> Result<(), Box<dyn Error>> {
+pub async fn publish_on_nostr() -> Result<(), Box<dyn Error + Send + Sync>> {
     // let keys = Keys::generate();
     // let secp = Secp256k1::new();
     // println!("publickey: {}", keys.public_key());
