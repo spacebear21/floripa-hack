@@ -67,7 +67,7 @@ impl Sloppy {
         // Implement LLM API call with context
 
         let completion = ai_client
-            .ask_llm("[There are no previous campaings | nostr]")
+            .ask_llm("{\"past_campaigns\": [\"\"], \"developer_responses\": \"\"}")
             .await?;
         Ok(completion)
     }
