@@ -7,7 +7,7 @@ use std::time::Duration;
 use tokio::time;
 
 use crate::nostr::publish_on_nostr;
-use crate::unleashed::UnleashedClient;
+use crate::unleashed::{CampaignResponse, UnleashedClient};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct WalletState {
@@ -65,14 +65,15 @@ impl Sloppy {
     ) -> Result<String, Box<dyn Error + Send + Sync>> {
         // Implement LLM API call with context
         let completion = ai_client
-            .ask_llm("{\"past_campaigns\": [\"\"], \"developer_responses\": \"\"}")
+            .ask_llm("{\"past_campaigns\": [\"\"], \"developer_responses\": \"You asked what we can do to improve responses. Maybe consider what you want out of this situation. Also, there are limited funds right now.\"}")
             .await?;
         Ok(completion)
     }
 
-    async fn publish_post(&self, content: String) -> Result<(), Box<dyn Error + Send + Sync>> {
+    async fn publish_post(&self, content: &str) -> Result<(), Box<dyn Error + Send + Sync>> {
         // Implement social media API integration
-        publish_on_nostr().await?;
+        publish_on_nostr(content).await?;
+        println!("Published post!");
         Ok(())
     }
 
@@ -114,11 +115,10 @@ impl Sloppy {
             println!("{:?}", &ai_client.get_balance().await);
 
             // Generate fundraising post
-            //let post_content = self.generate_fundraising_post(&ai_client).await?;
-            // println!("{}", post_content);
-
+            let post_content = self.generate_fundraising_post(&ai_client).await?;
+            let post_content = remove_quotes(post_content.trim());
             // Publish post
-            // self.publish_post(post_content).await?;
+            self.publish_post(post_content).await?;
 
             // Monitor results
             // let metrics = self.monitor_donations(Duration::from_secs(3600)).await?;
@@ -129,5 +129,13 @@ impl Sloppy {
             // Wait before next iteration
             time::sleep(Duration::from_secs(86400)).await; // 24 hours
         }
+    }
+}
+
+fn remove_quotes(s: &str) -> &str {
+    if (s.starts_with('"') && s.ends_with('"')) || (s.starts_with('\'') && s.ends_with('\'')) {
+        &s[1..s.len() - 1]
+    } else {
+        s
     }
 }

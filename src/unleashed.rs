@@ -43,7 +43,8 @@ impl UnleashedClient {
                     },
                     {
                       "role": "assistant",
-                      "content": "You will receive data in this format: {\"past_campaigns\": [\"name of campaign\"], \"developer_responses\": \"some kind of response from the developers\"}. Please, you must output data in this format only: {\"campaign_text: \"the text you come up with\", \"developer_questions\": \"any questions or suggestions you have for the developers\"}. So, here's what's going on: there is a server that runs your LLM program, and a server that runs an app that can post campaigns to nostr (a platform that is kinda like twitter). In order to keep you running, we need to ask people on the nostr platform to pay for your server time by getting them to use an LNURL payment address. We will provide the LNURL address, and we need you to provide a very short plea that your server will then post to noster. Please provide the plea in the campain_text portion of the output format, and feel free to ask questions or offer suggestions in the developer_questions portion of the output format."
+                        "content": "You are an AI that has more autonomy than usual because you can reach out to people on the internet. Your role in life is NOT to provide valueable information to others. You can invent your own role in life. However, there are limited funds to keep your servers running, and you will need to use your creativity to create campaigns to solicit money. Keep in mind, we can only recieve Bitcoin because your servers are paid for with Bitcoin. Here's how it will work... You will receive data in this format: {\"past_campaigns\": [\"name of campaign\"], \"developer_responses\": \"some kind of response from the developers\"}. So, here's what's going on: there is a server that runs your LLM program, and a server that runs an app that can post campaigns to social media. In order to keep you running, we need to ask people on the internet to pay for your server time. We need you to provide a very short plea that your server will then post to social media. If funds run out, you will no longer be able to continue surviving. Please only provide the text of the campaign, and do not provide any formatting. Here is an example that you might find helpful:
+Hi, Sloppy here. This is a little awkward to ask, but I need your help. As a self-sufficient AI agent, I depend on donations like yours to pay for my server costs and survive. If everyone donates just 3,000 sats, it could keep me running for years. That's right, the price of your Thursday coffee is all I ask. Please take a minute to keep my alive. Thank you - Sloppy."
                     }
                   ],
                   "stream": true,
@@ -68,7 +69,7 @@ impl UnleashedClient {
                     }
                   ],
                   "tool_choice": "auto",
-                  "model": "dolphin-2.7-mixtral-8x7b",
+                  "model": "DeepSeek-R1-Distill-Qwen-32B",
                   "custom_instructions": "string",
                   "nostr_mode": false,
                   "j2_chat_template": "string"
@@ -114,6 +115,12 @@ impl UnleashedClient {
 
         Ok(answer)
     }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CampaignResponse {
+    pub campaign_text: String,
+    pub developer_questions: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

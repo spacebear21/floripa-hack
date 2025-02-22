@@ -1,7 +1,7 @@
 use nostr_sdk::prelude::*;
 use std::error::Error;
 
-pub async fn publish_on_nostr() -> Result<(), Box<dyn Error + Send + Sync>> {
+pub async fn publish_on_nostr(note: &str) -> Result<(), Box<dyn Error + Send + Sync>> {
     // Or use your already existing (from hex or bech32)
     let nostr_seckey = std::env::var("NOSTR_SECKEY")?;
     let keys = Keys::parse(&nostr_seckey)?;
@@ -13,9 +13,6 @@ pub async fn publish_on_nostr() -> Result<(), Box<dyn Error + Send + Sync>> {
     // Configure client to use proxy for `.onion` relays
     //let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::LOCALHOST, 9050));
     let connection: Connection = Connection::new();
-    //.proxy(addr)
-    //.embedded_tor() // Use `.embedded_tor()` instead to enable the embedded tor client (require `tor` feature)
-    //.target(ConnectionTarget::Onion);
     let opts = Options::new().connection(connection);
 
     // Create new client with custom options
@@ -34,13 +31,11 @@ pub async fn publish_on_nostr() -> Result<(), Box<dyn Error + Send + Sync>> {
     let metadata = Metadata::new()
         .name("Sloppy")
         .display_name("Sloppy")
-        .about("Please help save sloppy.")
+        .about("Please help save sloppy.\nsavesloppy.org")
         .picture(Url::parse(
             "http://www.savesloppy.org/folded-hands_1f64f.png",
         )?)
-        .banner(Url::parse(
-            "http://www.savesloppy.org/folded-hands_1f64f.png",
-        )?)
+        .banner(Url::parse("http://www.savesloppy.org/pray-bg.png")?)
         .nip05("Sloppy@savesloppy.org")
         .lud16("sloppy@getalby.com");
 
@@ -53,7 +48,7 @@ pub async fn publish_on_nostr() -> Result<(), Box<dyn Error + Send + Sync>> {
     // client.send_event_builder(builder).await?;
 
     // Create a POW text note
-    let builder = EventBuilder::text_note("Hello world").pow(20);
+    let builder = EventBuilder::text_note(note).pow(20);
     client.send_event_builder(builder).await?; // Send to all relays
                                                // client.send_event_builder_to(["wss://relay.damus.io"], builder).await?; // Send to specific relay
 

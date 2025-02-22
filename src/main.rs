@@ -10,33 +10,33 @@ pub mod unleashed;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let matches = Command::new("saving-sloppy")
-        .version("1.0")
-        .arg(
-            Arg::new("make-sloppy")
-                .help("Creates sloppy")
-                .long("make-sloppy")
-                .action(clap::ArgAction::SetTrue),
-        )
-        .arg(
-            Arg::new("post-to-nostr")
-                .help("Do not do it, it doesn't work.")
-                .long("post")
-                .action(clap::ArgAction::SetTrue),
-        )
-        .get_matches();
+    // let matches = Command::new("saving-sloppy")
+    //     .version("1.0")
+    //     .arg(
+    //         Arg::new("make-sloppy")
+    //             .help("Creates sloppy")
+    //             .long("make-sloppy")
+    //             .action(clap::ArgAction::SetTrue),
+    //     )
+    //     .arg(
+    //         Arg::new("post-to-nostr")
+    //             .help("Do not do it, it doesn't work.")
+    //             .long("post")
+    //             .action(clap::ArgAction::SetTrue),
+    //     )
+    //     .get_matches();
 
-    if matches.get_flag("make-sloppy") {
-        if let Err(e) = make_sloppy() {
-            eprintln!("Error: {}", e);
-        }
-    }
+    // if matches.get_flag("make-sloppy") {
+    //     if let Err(e) = make_sloppy() {
+    //         eprintln!("Error: {}", e);
+    //     }
+    // }
 
-    if matches.get_flag("post-to-nostr") {
-        if let Err(e) = post_to_nostr() {
-            eprintln!("Error: {}", e);
-        }
-    }
+    // if matches.get_flag("post-to-nostr") {
+    //     if let Err(e) = post_to_nostr() {
+    //         eprintln!("Error: {}", e);
+    //     }
+    // }
 
     let app = Router::new().route("/", axum::routing::get(|| async { "Hello, World!" }));
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
