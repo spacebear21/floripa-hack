@@ -1,5 +1,7 @@
+use futures_util::StreamExt;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION};
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 use std::error::Error;
 
 pub struct UnleashedClient {
@@ -27,6 +29,124 @@ impl UnleashedClient {
             .await?;
         res.json().await
     }
+
+    pub async fn ask_llm(&self, prompt: &str) -> Result<String, Box<dyn Error>> {
+        let res = self
+            .client
+            .post("https://unleashed.chat/api/v1/chat/completions")
+            .body(
+                json!({
+                  "messages": [
+                    {
+                      "role": "user",
+                      "content": prompt,
+                    },
+                    {
+                      "role": "assistant",
+                      "content": "There is a server that runs The LLM and also a server that runs The Program which queries the LLM and can also post advertising campaings to the internet. The advertising campaings help fund The LLM server and The Program server. We need to ask humans on the internet for Bitcoin and Lightning payments in order to keep the servers running. You will receive a consolidated list of previous campaigns, a list of currently available platforms to post advertisements, and you are to generate the text for a next campaign which is intended to bring in money to keep your servers running. The format you will receive is: [previous campaings | available platforms]. Keep the advertisement very short because it needs to fit into a twitter post or nostr post."
+                    }
+                  ],
+                  "stream": true,
+                  "max_tokens": 10,
+                  "temperature": 0.5,
+                  "top_p": 1,
+                  "tools": [
+                    {
+                      "type": "function",
+                      "function": {
+                        "name": "string",
+                        "description": "string",
+                        "parameters": {
+                          "type": "object",
+                          "properties": {
+                            "additionalProp1": {},
+                            "additionalProp2": {},
+                            "additionalProp3": {}
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "tool_choice": "auto",
+                  "model": "dolphin-2.7-mixtral-8x7b",
+                  "custom_instructions": "string",
+                  "nostr_mode": false,
+                  "j2_chat_template": "string"
+                })
+                .to_string(),
+            )
+            .send()
+            .await?;
+
+        if !res.status().is_success() {
+            eprintln!("HTTP Error: {}", res.status());
+            return Err(format!("HTTP Error: {}", res.status()).into());
+        }
+
+        let mut stream = res.bytes_stream();
+        let mut answers = Vec::<ChatCompletion>::new();
+
+        while let Some(chunk) = stream.next().await {
+            match chunk {
+                Ok(bytes) => {
+                    let partial_completion = String::from_utf8_lossy(&bytes);
+                    for line in partial_completion.lines() {
+                        if line.starts_with("data:") {
+                            let json_part = &line[5..]; // Remove 'data:' prefix
+                            if let Ok(parsed) = serde_json::from_str::<ChatCompletion>(json_part) {
+                                answers.push(parsed);
+                            }
+                        }
+                    }
+                }
+                Err(e) => return Err(format!("Streaming error: {:?}", e).into()),
+            }
+        }
+
+        let answer = answers
+            .iter()
+            .flat_map(|completion| &completion.choices)
+            .map(|choice| &choice.delta.content)
+            .fold(String::new(), |mut acc, content| {
+                acc.push_str(content);
+                acc
+            });
+
+        Ok(answer)
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ChatCompletion {
+    id: String,
+    object: String,
+    created: u64,
+    model: String,
+    choices: Vec<Choice>,
+    usage: Usage,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Choice {
+    index: u32,
+    finish_reason: Option<String>,
+    delta: Delta,
+    nostr_notes: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Delta {
+    role: String,
+    content: String,
+    reasoning_content: Option<String>,
+    tool_calls: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Usage {
+    prompt_tokens: u32,
+    completion_tokens: u32,
+    total_tokens: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
