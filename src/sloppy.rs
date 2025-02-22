@@ -114,11 +114,11 @@ impl Sloppy {
             println!("{:?}", &ai_client.get_balance().await);
 
             // Generate fundraising post
-            let post_content = self.generate_fundraising_post(&ai_client).await?;
-            println!("{}", post_content);
+            //let post_content = self.generate_fundraising_post(&ai_client).await?;
+            // println!("{}", post_content);
 
             // Publish post
-            self.publish_post(post_content).await?;
+            // self.publish_post(post_content).await?;
 
             // Monitor results
             // let metrics = self.monitor_donations(Duration::from_secs(3600)).await?;

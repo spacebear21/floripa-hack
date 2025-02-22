@@ -2,17 +2,6 @@ use nostr_sdk::prelude::*;
 use std::error::Error;
 
 pub async fn publish_on_nostr() -> Result<(), Box<dyn Error + Send + Sync>> {
-    // let keys = Keys::generate();
-    // let secp = Secp256k1::new();
-    // println!("publickey: {}", keys.public_key());
-    // println!(
-    //     "xonly_pubkey: {} \nParity: {:?}",
-    //     keys.secret_key().x_only_public_key(&secp).0,
-    //     keys.secret_key().x_only_public_key(&secp).1
-    // );
-    // println!("secretkey_hex: {}", keys.secret_key().to_secret_hex());
-    // println!("secretkey: {}", keys.secret_key().display_secret());
-
     // Or use your already existing (from hex or bech32)
     let nostr_seckey = std::env::var("NOSTR_SECKEY")?;
     let keys = Keys::parse(&nostr_seckey)?;
@@ -35,9 +24,6 @@ pub async fn publish_on_nostr() -> Result<(), Box<dyn Error + Send + Sync>> {
     // Add relays
     client.add_relay("wss://relay.damus.io").await?;
     client.add_relay("wss://nos.lol").await?;
-    client
-        .add_relay("ws://jgqaglhautb4k6e6i2g34jakxiemqp6z4wynlirltuukgkft2xuglmqd.onion")
-        .await?;
 
     // Add read relay
     client.add_read_relay("wss://relay.nostr.info").await?;
@@ -46,25 +32,28 @@ pub async fn publish_on_nostr() -> Result<(), Box<dyn Error + Send + Sync>> {
     client.connect().await;
 
     let metadata = Metadata::new()
-            .name("Test Demo User Name")
-            .display_name("Test Demo User Display Name")
-            .about("This is just a description")
-            .picture(Url::parse("https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Czechoslovakia_1938_road_sign_-_Give_Way.svg/501px-Czechoslovakia_1938_road_sign_-_Give_Way.svg.png")?)
-            .banner(Url::parse("https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Czechoslovakia_1938_road_sign_-_Give_Way.svg/501px-Czechoslovakia_1938_road_sign_-_Give_Way.svg.png")?)
-            .nip05("username@example.com")
-            .lud16("username@yexmaple.com")
-            .custom_field("custom_field", "my custom value");
+        .name("Sloppy")
+        .display_name("Sloppy")
+        .about("Please help save sloppy.")
+        .picture(Url::parse(
+            "http://www.savesloppy.org/folded-hands_1f64f.png",
+        )?)
+        .banner(Url::parse(
+            "http://www.savesloppy.org/folded-hands_1f64f.png",
+        )?)
+        .nip05("Sloppy@savesloppy.org")
+        .lud16("sloppy@getalby.com");
 
     // Update metadata
     client.set_metadata(&metadata).await?;
 
     // Publish a text note
 
-    let builder = EventBuilder::text_note("My first text note from rust-nostr!");
-    client.send_event_builder(builder).await?;
+    // let builder = EventBuilder::text_note("Yet another post from rust-nostr!");
+    // client.send_event_builder(builder).await?;
 
     // Create a POW text note
-    let builder = EventBuilder::text_note("POW text note from nostr-sdk").pow(20);
+    let builder = EventBuilder::text_note("Hello world").pow(20);
     client.send_event_builder(builder).await?; // Send to all relays
                                                // client.send_event_builder_to(["wss://relay.damus.io"], builder).await?; // Send to specific relay
 

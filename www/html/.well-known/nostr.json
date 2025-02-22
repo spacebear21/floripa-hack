@@ -1,0 +1,16 @@
+{
+  "names": {
+      "Sloppy": "npub15spksrm37retpjf8axp0gev0d8gdan0qrdxae60nqraq67j4hj7q65qzzu",
+      "TestDemoUser": "npub18649c4ge8kt3k8lttsgzapxhkflcjjrulxq74zjg5dg558zxf5mqxkjhj2"
+  },
+  "relays": {
+    "npub15spksrm37retpjf8axp0gev0d8gdan0qrdxae60nqraq67j4hj7q65qzzu": [
+      "wss://relay.damus.io",
+      "wss://nos.lol"
+    ],
+    "npub18649c4ge8kt3k8lttsgzapxhkflcjjrulxq74zjg5dg558zxf5mqxkjhj2": [
+      "wss://relay.damus.io",
+      "wss://nos.lol"
+    ]
+  }
+}
